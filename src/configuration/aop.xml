@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 		
+       	http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+       	http://www.springframework.org/schema/aop 	
+       	http://www.springframework.org/schema/aop/spring-aop-3.2.xsd">
+
+	<bean id="applicationPerformanceLogger" class="com.hovs.sfi.util.ApplicationPerformanceLogger">
+		<property name="slowMethodPerformanceTimeSeconds"
+			value="${monitor.log.slowMethodPerformanceTimeSeconds}"></property>
+	</bean>
+
+	<aop:config>
+		<aop:aspect ref="applicationPerformanceLogger">
+			<aop:pointcut id="logRequestMethod"
+				expression="execution(* com.hovs.sfi.view.BaseServlet.doService(..))" />
+			<aop:around method="logRequestExecutionTime" pointcut-ref="logRequestMethod" />
+
+			<aop:pointcut id="logControllerMethodExecution"
+				expression="execution(* com.hovs.sfi.controller.*Controller.handleRequestInternal(..))" />
+			<aop:around method="logMethodExecutionTime" pointcut-ref="logControllerMethodExecution" />
+			
+			<aop:pointcut id="logManagerMethodExecution"
+				expression="execution(* com.hovs.sfi.service.*Manager.*(..))" />
+			<aop:around method="logMethodExecutionTime" pointcut-ref="logManagerMethodExecution" />
+		</aop:aspect>
+	</aop:config>
+</beans>

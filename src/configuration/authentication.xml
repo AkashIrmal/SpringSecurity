@@ -1,0 +1,119 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-3.2.xsd
+http://www.springframework.org/schema/security
+http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+	<context:component-scan base-package="com.hovs.sfi.auth,com.hovs.sfi.config"></context:component-scan>
+	
+	
+	
+	<security:http pattern="/UI-INF/**" security="none"/>
+	<security:http auto-config="false" use-expressions="true" disable-url-rewriting="true" entry-point-ref="ajaxAwareAuthenitcationEntryPoint">
+			<security:intercept-url pattern="/login" access="permitAll" />
+			<security:intercept-url pattern="/login.do" access="permitAll"/>
+			<security:intercept-url pattern="/tier2.do" access="hasRole('1')" /> 
+			<security:intercept-url pattern="/home.do" access="hasRole('2')" />
+			<security:intercept-url pattern="/sfi.do" access="hasRole('2')" />
+			<security:intercept-url pattern="/tier2Admin.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/role.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/view.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/setuprole.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/user.do" access="hasRole('4')" />
+			
+			<security:intercept-url pattern="/report.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/currentfileupdate.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/lawfirmreport.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/businessreport.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/userinformationreport.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/legalnamereport.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/customerreport.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/validw9report.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/invalidw9report.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/transmissionreport.do" access="hasRole('4')" />
+			 <security:intercept-url pattern="/useridlistreport.do" access="hasRole('4')" />
+			 <security:intercept-url pattern="/billingreport.do" access="hasRole('4')" />
+	
+			
+			
+			<security:intercept-url pattern="/userpermission.do" access="hasRole('4')" />
+			<security:intercept-url pattern="/extendSessionTime.do" access="permitAll" />
+			
+			
+			
+			
+			<security:custom-filter position="FORM_LOGIN_FILTER" ref="authenticationFilter" />
+			<security:custom-filter position="CONCURRENT_SESSION_FILTER" ref="concurrencyFilter" />
+			<security:access-denied-handler ref="authAccessDeniedHandler"/>
+			<security:logout logout-url="/logout" invalidate-session="true" success-handler-ref="sfiLogoutHandler"  />
+			<security:session-management session-authentication-strategy-ref="sas"/>
+			
+			<!-- <security:intercept-url pattern="/**" requires-channel="https"/>
+			<security:port-mappings>
+                 <security:port-mapping http="8080" https="8443"/>
+            </security:port-mappings> -->
+            
+	</security:http>
+
+	<bean id="ajaxAwareAuthenitcationEntryPoint" class="com.hovs.sfi.auth.AjaxAwareAuthenticationEntryPoint">
+		<constructor-arg>
+			<value>/login.do</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean id="authAccessDeniedHandler" class="com.hovs.sfi.auth.AuthAccessDeniedHandler">
+		 <property name="accessDeniedUrl" value="/login.do" />
+	</bean>
+	
+	<bean id="authenticationFilter" class="com.hovs.sfi.auth.AuthenticationFilter">
+		<property name="filterProcessesUrl" value="/login"></property>
+		<property name="authenticationManager" ref="authenticationManager"></property>
+		<property name="authenticationSuccessHandler" ref="successHandler"></property>
+		<property name="authenticationFailureHandler" ref="failureHandler"></property>
+		<property name="sessionAuthenticationStrategy" ref="sas"></property>
+	</bean>
+	
+	<security:authentication-manager alias="authenticationManager">
+		<security:authentication-provider
+			user-service-ref="authService">
+			 <security:password-encoder ref="passwordEncoder">
+				<security:salt-source user-property="username"/>
+			</security:password-encoder>
+		</security:authentication-provider>
+	</security:authentication-manager>
+	
+	<bean id="passwordEncoder" class="com.hovs.sfi.auth.AuthenticationPasswordEncoder"></bean>
+				
+	<bean id="successHandler" class="com.hovs.sfi.auth.AuthenticationSuccessHandler">
+	</bean>
+	
+	<bean id="loggerListener" class="com.hovs.sfi.auth.AuthenticationLoggerListener"></bean>
+	
+	<bean id="sfiLogoutHandler" class="com.hovs.sfi.auth.AuthenticationLogoutHandler" >
+    	<constructor-arg value="/login.do" />
+	</bean>
+	
+	<bean id="failureHandler" class="com.hovs.sfi.auth.AuthenticationFailureHandler">
+		<property name="defaultFailureUrl" value="/login.do?failed"></property>
+	</bean>
+	
+	<bean id="concurrencyFilter"
+		class="org.springframework.security.web.session.ConcurrentSessionFilter">
+		<property name="sessionRegistry" ref="sessionRegistry" />
+		<property name="expiredUrl" value="/login.do" />
+	</bean>
+	
+	<bean id="sas"
+		class="org.springframework.security.web.authentication.session.ConcurrentSessionControlStrategy">
+		<constructor-arg name="sessionRegistry" ref="sessionRegistry" />
+		<property name="maximumSessions" value="${app.maximumSessions}" />
+		<property name="exceptionIfMaximumExceeded" value="true"></property>
+	</bean>
+	<security:global-method-security pre-post-annotations="enabled"></security:global-method-security>
+	
+	<bean id="sessionRegistry" class="org.springframework.security.core.session.SessionRegistryImpl" />
+</beans>
